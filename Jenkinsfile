@@ -21,15 +21,13 @@ pipeline {
             passwordVariable: 'DOCKER_PASSWORD'
           )]) {
             // Secure Docker login
-            sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin"
+            bat "echo %DOCKER_PASSWORD% | docker login -u %DOCKER_USERNAME% --password-stdin"
 
             // Build Docker image
-            sh "docker-compose build web"
+            bat "docker build -t %DOCKER_REGISTRY%/my-nodejs-app:%BUILD_NUMBER% ."
 
-            // Tag and push image
-            def imageTag = "${DOCKER_REGISTRY}/my-nodejs-app:${env.BUILD_NUMBER}"
-            sh "docker tag my-nodejs-app:${env.BUILD_NUMBER} ${imageTag}"
-            sh "docker push ${imageTag}"
+            // Push image
+            bat "docker push %DOCKER_REGISTRY%/my-nodejs-app:%BUILD_NUMBER%"
           }
         }
       }
@@ -39,13 +37,11 @@ pipeline {
       steps {
         script {
           // Stop and remove old containers
-          sh "docker stop node-web node-mongo-db || true"
-          sh "docker rm node-web node-mongo-db || true"
+          bat "docker stop node-web node-mongo-db || exit 0"
+          bat "docker rm node-web node-mongo-db || exit 0"
 
-          // Recreate containers with updated image
-          withEnv(["BUILD_NUMBER=${env.BUILD_NUMBER}"]) {
-            sh "docker-compose up -d --force-recreate"
-          }
+          // Recreate containers
+          bat "docker-compose up -d --force-recreate"
         }
       }
     }
