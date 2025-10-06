@@ -6,7 +6,7 @@ pipeline {
   stages {
     stage('Checkout Source') {
       steps {
-        git url: 'https://github.com/sscq8112v2/nodejs-docker-lab.git', branch: 'p1'
+        checkout scm
       }
     }
     stage('Build & Push Docker Images') {
@@ -29,7 +29,9 @@ pipeline {
         script {
           sh "docker stop node-web node-mongo-db || true"
           sh "docker rm node-web node-mongo-db || true"
-          sh "BUILD_NUMBER=${env.BUILD_NUMBER} docker-compose up -d --force-recreate"
+          withEnv(["BUILD_NUMBER=${env.BUILD_NUMBER}"]) {
+            sh "docker-compose up -d --force-recreate"
+          }
         }
       }
     }
